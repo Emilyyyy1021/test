@@ -10,10 +10,6 @@ library(broom)
 library(qvalue)
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Load in prepared data
 ```{r}
 #analysis_trim
@@ -40,6 +36,12 @@ get_pval <- function(mod) {
     filter(term == "scaled_value") %>%
     pull(p.value)
 }
+get_coef <- function(mod) {
+  tidy(mod) %>%
+    filter(term == "scaled_value") %>%
+    pull(estimate)
+}
+
 get_output <- function(mod) augment(mod)
 
 
@@ -52,6 +54,23 @@ master <- analysis_trim %>%
 
 master
 ```
+
+```{r}
+get_coef <- function(mod) {
+  tidy(mod) %>%
+    filter(term == "scaled_value") %>%
+    pull(estimate)
+}
+
+master_new <- analysis_trim %>%
+  group_by(genes) %>%
+  nest() %>%
+  mutate(model = map(data, fit_model),
+         p.value = map_dbl(model, get_pval),
+         coef = map_dbl(model, get_coef))
+
+```
+
 
 ```{r}
 test_p <- master$p.value
